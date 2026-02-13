@@ -1,0 +1,126 @@
+# Uncertainty-Aware CheXpert Diagnosis Configuration
+
+# Experiment settings
+experiment:
+  name: "evidential_chexpert"
+  seed: 42
+  output_dir: "results"
+  checkpoint_dir: "checkpoints"
+
+# Data settings
+data:
+  dataset_name: "chexpert"
+  data_dir: "data/chexpert"
+  image_size: 224
+  num_workers: 4
+  cache_dataset: false
+
+  # CheXpert-specific labels
+  labels:
+    - "Atelectasis"
+    - "Cardiomegaly"
+    - "Consolidation"
+    - "Edema"
+    - "Pleural Effusion"
+
+  # Uncertainty handling: treat -1 as uncertain label (key innovation)
+  uncertain_policy: "as_target"  # Options: as_target, ignore, zeros, ones
+
+  # Train/val split
+  train_ratio: 0.8
+  val_ratio: 0.2
+
+# Model settings
+model:
+  architecture: "densenet121"
+  pretrained: true
+  num_classes: 5
+  dropout: 0.3
+
+  # Evidential learning parameters
+  use_evidential: true
+  evidence_activation: "exp"  # Options: exp, softplus, relu
+
+  # Uncertainty modeling
+  epistemic_weight: 1.0
+  aleatoric_weight: 1.0
+
+# Training settings
+training:
+  epochs: 50
+  batch_size: 32
+  learning_rate: 0.0001
+  weight_decay: 0.00001
+
+  # Optimizer
+  optimizer: "adam"
+  momentum: 0.9
+
+  # Learning rate schedule
+  scheduler: "cosine"
+  warmup_epochs: 5
+  min_lr: 0.000001
+
+  # Loss function
+  loss_type: "evidential_bce"  # Evidential binary cross-entropy
+  kl_weight: 0.01
+  kl_anneal_epochs: 10
+
+  # Mixed precision training
+  use_amp: true
+
+  # Gradient clipping
+  gradient_clip: 1.0
+
+# Validation settings
+validation:
+  eval_interval: 1
+  save_best: true
+  early_stopping_patience: 10
+  metric_for_best: "auroc_mean"
+
+# Augmentation settings
+augmentation:
+  horizontal_flip: 0.5
+  vertical_flip: 0.0
+  rotation_limit: 10
+  brightness_limit: 0.2
+  contrast_limit: 0.2
+  shift_limit: 0.1
+  scale_limit: 0.1
+
+# Test-time augmentation
+tta:
+  enabled: false
+  num_augmentations: 5
+
+# Uncertainty calibration
+calibration:
+  method: "temperature_scaling"
+  validation_split: 0.2
+
+# MLflow tracking
+mlflow:
+  tracking_uri: "mlruns"
+  experiment_name: "chexpert_uncertainty"
+  log_artifacts: true
+
+# Evaluation metrics
+metrics:
+  compute_auroc: true
+  compute_auprc: true
+  compute_ece: true
+  compute_brier: true
+  uncertainty_correlation: true
+
+  # Target metrics for research evaluation
+  target_auroc_certain: 0.88
+  target_auroc_uncertain: 0.75
+  target_ece: 0.05
+  target_uncertainty_correlation: 0.7
+
+# Inference settings
+inference:
+  batch_size: 64
+  uncertainty_threshold: 0.7  # For automated referral
+  ensemble_size: 1
