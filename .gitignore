@@ -84,3 +84,4 @@ data/raw/
 data/processed/
 outputs/
 .venv/
+*.pyc
