@@ -1,0 +1,19 @@
+{
+  "auroc_certain_mean": 0.49675571959737486,
+  "auroc_certain_class_0": 0.4340744001760951,
+  "auroc_certain_class_1": 0.5230969420949902,
+  "auroc_certain_class_2": 0.5089009287925697,
+  "auroc_certain_class_3": 0.5784166487878137,
+  "auroc_certain_class_4": 0.4392896781354051,
+  "auroc_uncertain_mean": 0.5,
+  "auroc_uncertain_class_0": 0.5,
+  "auroc_uncertain_class_1": 0.5,
+  "auroc_uncertain_class_2": 0.5,
+  "auroc_uncertain_class_3": 0.5,
+  "auroc_uncertain_class_4": 0.5,
+  "auroc_mean": 0.49675571959737486,
+  "auprc_mean": 0.0,
+  "calibration_ece": 0.24400001743435862,
+  "brier_score": 0.23169644176959991,
+  "uncertainty_correlation": 0.03779238335367927
+}

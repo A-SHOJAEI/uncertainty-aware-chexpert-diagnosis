@@ -1,8 +1,13 @@
 #!/usr/bin/env python
 """Evaluation script for uncertainty-aware CheXpert diagnosis."""
 
-import argparse
+import sys
 from pathlib import Path
+
+# Add src to path for development
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
+import argparse
 import json
 import logging
 
@@ -161,7 +166,7 @@ def main() -> None:
         return
 
     logger.info(f"Loading checkpoint from: {checkpoint_path}")
-    checkpoint = torch.load(checkpoint_path, map_location=device)
+    checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
 
     # Initialize model
     if 'config' in checkpoint:
@@ -203,8 +208,10 @@ def main() -> None:
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
+    # Convert numpy types to native Python for JSON serialization
+    serializable_metrics = {k: float(v) for k, v in metrics.items()}
     with open(output_path, 'w') as f:
-        json.dump(metrics, f, indent=2)
+        json.dump(serializable_metrics, f, indent=2)
 
     logger.info(f"\nResults saved to: {output_path}")
 

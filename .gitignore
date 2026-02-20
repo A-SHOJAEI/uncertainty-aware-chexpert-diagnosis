@@ -56,7 +56,6 @@ checkpoints/
 logs/
 *.log
 mlruns/
-results/
 
 # OS
 .DS_Store

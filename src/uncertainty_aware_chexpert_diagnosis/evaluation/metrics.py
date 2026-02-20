@@ -52,20 +52,22 @@ class UncertaintyMetrics:
         """
         metrics = {}
 
-        # Separate certain and uncertain labels
+        # Separate certain and uncertain labels (per-element masks)
         certain_mask = (uncertainty_masks == 0) & (labels >= 0)
         uncertain_mask = (uncertainty_masks == 1)
 
-        # AUROC for certain labels
+        # AUROC for certain labels (per-class, using only certain samples per class)
         if self.compute_auroc and certain_mask.sum() > 0:
             try:
-                auroc_certain = self._compute_auroc_per_class(
-                    predictions[certain_mask],
-                    labels[certain_mask]
+                auroc_certain = self._compute_auroc_per_class_masked(
+                    predictions, labels, certain_mask
                 )
-                metrics['auroc_certain_mean'] = np.mean(list(auroc_certain.values()))
-                for i, auroc in auroc_certain.items():
-                    metrics[f'auroc_certain_class_{i}'] = auroc
+                if auroc_certain:
+                    metrics['auroc_certain_mean'] = np.mean(list(auroc_certain.values()))
+                    for i, auroc in auroc_certain.items():
+                        metrics[f'auroc_certain_class_{i}'] = auroc
+                else:
+                    metrics['auroc_certain_mean'] = 0.0
             except Exception as e:
                 logger.warning(f"Could not compute AUROC for certain labels: {e}")
                 metrics['auroc_certain_mean'] = 0.0
@@ -73,15 +75,15 @@ class UncertaintyMetrics:
         # AUROC for uncertain labels (key metric for our approach)
         if self.compute_auroc and uncertain_mask.sum() > 0:
             try:
-                # For uncertain labels, we check if model assigns high uncertainty
-                # This is our novel contribution
-                auroc_uncertain = self._compute_auroc_per_class(
-                    predictions[uncertain_mask],
-                    labels[uncertain_mask]
+                auroc_uncertain = self._compute_auroc_per_class_masked(
+                    predictions, labels, uncertain_mask
                 )
-                metrics['auroc_uncertain_mean'] = np.mean(list(auroc_uncertain.values()))
-                for i, auroc in auroc_uncertain.items():
-                    metrics[f'auroc_uncertain_class_{i}'] = auroc
+                if auroc_uncertain:
+                    metrics['auroc_uncertain_mean'] = np.mean(list(auroc_uncertain.values()))
+                    for i, auroc in auroc_uncertain.items():
+                        metrics[f'auroc_uncertain_class_{i}'] = auroc
+                else:
+                    metrics['auroc_uncertain_mean'] = 0.0
             except Exception as e:
                 logger.warning(f"Could not compute AUROC for uncertain labels: {e}")
                 metrics['auroc_uncertain_mean'] = 0.0
@@ -136,6 +138,38 @@ class UncertaintyMetrics:
 
         return metrics
 
+    def _compute_auroc_per_class_masked(
+        self,
+        predictions: np.ndarray,
+        labels: np.ndarray,
+        mask: np.ndarray
+    ) -> Dict[int, float]:
+        """Compute AUROC for each class using only masked (certain/uncertain) samples per class."""
+        num_classes = predictions.shape[1]
+        auroc_dict = {}
+
+        for i in range(num_classes):
+            class_mask = mask[:, i]
+            class_labels = labels[class_mask, i]
+            class_preds = predictions[class_mask, i]
+
+            # Only keep binary labels (0 or 1) for AUROC computation
+            binary_mask = (class_labels == 0) | (class_labels == 1)
+            if binary_mask.sum() > 0 and len(np.unique(class_labels[binary_mask])) > 1:
+                try:
+                    auroc = roc_auc_score(
+                        class_labels[binary_mask],
+                        class_preds[binary_mask]
+                    )
+                    auroc_dict[i] = auroc
+                except Exception as e:
+                    logger.warning(f"Could not compute masked AUROC for class {i}: {e}")
+                    auroc_dict[i] = 0.5
+            else:
+                auroc_dict[i] = 0.5
+
+        return auroc_dict
+
     def _compute_auroc_per_class(
         self,
         predictions: np.ndarray,
@@ -149,13 +183,15 @@ class UncertaintyMetrics:
             class_labels = labels[:, i]
             class_preds = predictions[:, i]
 
-            # Filter out NaN labels
+            # Filter out NaN labels and non-binary labels (e.g. 0.5 from uncertain policy)
             valid_mask = ~np.isnan(class_labels)
-            if valid_mask.sum() > 0 and len(np.unique(class_labels[valid_mask])) > 1:
+            # Only keep binary labels (0 or 1) for AUROC computation
+            binary_mask = valid_mask & ((class_labels == 0) | (class_labels == 1))
+            if binary_mask.sum() > 0 and len(np.unique(class_labels[binary_mask])) > 1:
                 try:
                     auroc = roc_auc_score(
-                        class_labels[valid_mask],
-                        class_preds[valid_mask]
+                        class_labels[binary_mask],
+                        class_preds[binary_mask]
                     )
                     auroc_dict[i] = auroc
                 except Exception as e:

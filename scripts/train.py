@@ -1,8 +1,13 @@
 #!/usr/bin/env python
 """Training script for uncertainty-aware CheXpert diagnosis."""
 
-import logging
+import sys
 from pathlib import Path
+
+# Add src to path for development
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
+import logging
 import random
 
 import numpy as np

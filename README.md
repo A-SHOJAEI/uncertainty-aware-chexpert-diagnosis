@@ -71,20 +71,30 @@ This approach treats radiologist disagreement as valuable training signal rather
 
 ## Results
 
-Training completed successfully (11 epochs on synthetic data). Real CheXpert data will yield substantially higher metrics.
+Training completed with early stopping at epoch 11 (patience=10) on synthetic data. Model evaluated on 200 validation samples.
 
-**Training Results** (Synthetic Data, Final Epoch):
+**Evaluation Results** (Synthetic Data):
 
-| Metric | Value | Notes |
-|--------|-------|-------|
-| AUROC (overall) | 0.500 | Random baseline on synthetic data |
-| AUROC (uncertain labels) | 0.000 | No uncertain patterns in synthetic data |
-| AUPRC | 0.000 | Limited positive samples in synthetic data |
-| Calibration ECE | 0.261 | Poor calibration expected on random data |
-| Uncertainty Correlation | 0.024 | No real radiologist uncertainty in synthetic data |
-| Validation Loss | 1.467 | Final epoch validation loss |
+| Metric | Value |
+|--------|-------|
+| AUROC (certain labels, mean) | 0.4968 |
+| AUROC (uncertain labels, mean) | 0.5000 |
+| AUROC (overall, mean) | 0.4968 |
+| Calibration ECE | 0.2440 |
+| Brier Score | 0.2317 |
+| Uncertainty Correlation | 0.0378 |
 
-**Note**: These metrics reflect training on synthetic/random data for demonstration. On real CheXpert data with actual uncertain labels, target performance is AUROC (certain) > 0.85, ECE < 0.08, and uncertainty correlation > 0.65.
+**Per-Class AUROC (Certain Labels)**:
+
+| Class | AUROC |
+|-------|-------|
+| Atelectasis | 0.4341 |
+| Cardiomegaly | 0.5231 |
+| Consolidation | 0.5089 |
+| Edema | 0.5784 |
+| Pleural Effusion | 0.4393 |
+
+**Note**: These metrics reflect training and evaluation on synthetic random data for demonstration purposes. Performance is near chance level (0.5 AUROC) as expected with random noise images and labels. On real CheXpert data with actual chest X-rays and radiologist labels, target performance is AUROC (certain) > 0.85, ECE < 0.08, and uncertainty correlation > 0.65.
 
 **Uncertainty decomposition**:
 - **Epistemic**: Model uncertainty from insufficient training data → refer to specialist
