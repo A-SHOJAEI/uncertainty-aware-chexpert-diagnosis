@@ -1,0 +1,24 @@
+{
+  "experiment": "uncertainty_aware_chexpert_diagnosis",
+  "dataset": "synthetic_chexpert",
+  "model": "densenet121_evidential",
+  "pathologies": ["Atelectasis", "Cardiomegaly", "Consolidation", "Edema", "Pleural Effusion"],
+  "metrics": {
+    "auroc_certain_mean": 0.4968,
+    "auroc_uncertain_mean": 0.5000,
+    "auroc_mean": 0.4968,
+    "auprc_mean": 0.0,
+    "calibration_ece": 0.2440,
+    "brier_score": 0.2317,
+    "uncertainty_correlation": 0.0378
+  },
+  "per_class_auroc": {
+    "Atelectasis": 0.4341,
+    "Cardiomegaly": 0.5231,
+    "Consolidation": 0.5089,
+    "Edema": 0.5784,
+    "Pleural Effusion": 0.4393
+  },
+  "notes": "Trained and evaluated on synthetic random data. Near-chance AUROC (0.50) is expected. Real CheXpert data targets: AUROC > 0.85, ECE < 0.08, uncertainty correlation > 0.65.",
+  "status": "completed"
+}
